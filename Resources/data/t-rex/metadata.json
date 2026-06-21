@@ -1,0 +1,131 @@
+{
+  "name": "t-rex",
+  "persona": "Born without the fiery breath of its kin, this clumsy T-Rex refused to be defined by its limitations. By mastering the blade, it forged a new destiny as the clan's most formidable champion.",
+  "startType": "egg",
+  "stages": {
+    "2": {
+      "story": "",
+      "visual": {
+        "hover": [
+          "barf.webp"
+        ],
+        "click": [
+          "barf.webp"
+        ],
+        "cover": [
+          "card.png"
+        ],
+        "character": [
+          "cover.png"
+        ],
+        "evolve": [
+          "evolve.webp"
+        ],
+        "idle": [
+          "howl.webp",
+          "walk.webp"
+        ]
+      },
+      "audio": {
+        "hover": [
+          "barf.mp3"
+        ],
+        "click": [
+          "barf.mp3"
+        ],
+        "idle": [
+          "howl.mp3",
+          "walk.mp3"
+        ]
+      }
+    },
+    "3": {
+      "story": "Eager to prove its might, the hatchling inhales deeply to summon a blaze, only to produce a clumsy puff of smoke. It coughs in bewilderment, unaware that greatness takes many forms.",
+      "visual": {
+        "hover": [
+          "3failed2.webp",
+          "failed.webp"
+        ],
+        "click": [
+          "3failed2.webp",
+          "failed.webp"
+        ],
+        "idle": [
+          "3walk.webp",
+          "slide.webp"
+        ],
+        "cover": [
+          "card.png"
+        ],
+        "character": [
+          "cover.png"
+        ],
+        "evolve": [
+          "evolve.webp"
+        ]
+      },
+      "audio": {
+        "hover": [
+          "3failed2.mp3",
+          "failed.mp3"
+        ],
+        "click": [
+          "3failed2.mp3",
+          "failed.mp3"
+        ],
+        "idle": [
+          "3walk.mp3",
+          "slide.mp3"
+        ],
+        "evolve": [
+          "evolve.mp3"
+        ]
+      }
+    },
+    "4": {
+      "story": "",
+      "visual": {
+        "idle": [
+          "4fight1.webp",
+          "4fight4.webp",
+          "4fight5.webp"
+        ],
+        "hover": [
+          "4fight2.webp",
+          "4fight3.webp"
+        ],
+        "click": [
+          "4fight2.webp",
+          "4fight3.webp"
+        ],
+        "cover": [
+          "card.png"
+        ],
+        "character": [
+          "cover.png"
+        ],
+        "evolve": [
+          "evolve.webp"
+        ]
+      },
+      "audio": {
+        "idle": [
+          "4fight1.mp3",
+          "4fight4.mp3",
+          "4fight5.mp3"
+        ],
+        "hover": [
+          "4fight2.mp3",
+          "4fight3.mp3"
+        ],
+        "click": [
+          "4fight2.mp3",
+          "4fight3.mp3"
+        ],
+        "evolve": [
+          "evolve.mp3"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,291 @@
+{
+  "files": {
+    "1/cover.png": {
+      "approved": true,
+      "prompt": "",
+      "tags": [
+        "cover"
+      ]
+    },
+    "1/evolve.mp3": {
+      "tags": [
+        "evolve"
+      ]
+    },
+    "1/evolve.webp": {
+      "approved": true,
+      "tags": [
+        "evolve"
+      ]
+    },
+    "1/jump.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "1/jump.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "1/jumpjump.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "1/jumpjump.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "1/roll.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "1/roll.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "1/shake.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "1/shake.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "1/try.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "1/try.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "2/barf.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "2/barf.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "2/card.png": {
+      "approved": true,
+      "tags": [
+        "cover"
+      ]
+    },
+    "2/cover.png": {
+      "approved": true,
+      "prompt": "",
+      "tags": [
+        "character"
+      ]
+    },
+    "2/evolve.webp": {
+      "approved": true,
+      "tags": [
+        "evolve"
+      ]
+    },
+    "2/howl.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "2/howl.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "2/walk.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "2/walk.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "3/3failed2.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "3/3failed2.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "3/3walk.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "3/3walk.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "3/card.png": {
+      "approved": true,
+      "tags": [
+        "cover"
+      ]
+    },
+    "3/cover.png": {
+      "approved": true,
+      "tags": [
+        "character"
+      ]
+    },
+    "3/evolve.mp3": {
+      "tags": [
+        "evolve"
+      ]
+    },
+    "3/evolve.webp": {
+      "approved": true,
+      "tags": [
+        "evolve"
+      ]
+    },
+    "3/evolve1.webp": {
+      "approved": true
+    },
+    "3/failed.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "3/failed.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "3/slide.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "3/slide.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight1.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight1.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight2.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "4/4fight2.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "4/4fight3.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "4/4fight3.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "4/4fight4.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight4.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight5.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/4fight5.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "4/card.png": {
+      "approved": true,
+      "prompt": "",
+      "tags": [
+        "cover"
+      ]
+    },
+    "4/cover.png": {
+      "approved": true,
+      "tags": [
+        "character"
+      ]
+    },
+    "4/evolve.mp3": {
+      "tags": [
+        "evolve"
+      ]
+    },
+    "4/evolve.webp": {
+      "tags": [
+        "evolve"
+      ]
+    }
+  }
+}

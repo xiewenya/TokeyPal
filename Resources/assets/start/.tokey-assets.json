@@ -1,0 +1,75 @@
+{
+  "files": {
+    "egg/card.png": {
+      "approved": true,
+      "tags": [
+        "cover"
+      ]
+    },
+    "egg/cover.png": {
+      "approved": true,
+      "tags": [
+        "character"
+      ]
+    },
+    "egg/jump.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/jump.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/jumpjump.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "egg/jumpjump.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "egg/roll.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/roll.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/shake.mp3": {
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/shake.webp": {
+      "approved": true,
+      "tags": [
+        "idle"
+      ]
+    },
+    "egg/try.mp3": {
+      "tags": [
+        "hover",
+        "click"
+      ]
+    },
+    "egg/try.webp": {
+      "approved": true,
+      "tags": [
+        "hover",
+        "click"
+      ]
+    }
+  }
+}

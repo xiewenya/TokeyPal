@@ -1,0 +1,48 @@
+{
+  "types": {
+    "egg": {
+      "story": "",
+      "visual": {
+        "cover": [
+          "card.png"
+        ],
+        "character": [
+          "cover.png"
+        ],
+        "idle": [
+          "jump.webp",
+          "roll.webp",
+          "shake.webp"
+        ],
+        "hover": [
+          "jumpjump.webp",
+          "try.webp"
+        ],
+        "click": [
+          "jumpjump.webp",
+          "try.webp"
+        ]
+      },
+      "audio": {
+        "idle": [
+          "jump.mp3",
+          "roll.mp3",
+          "shake.mp3"
+        ],
+        "hover": [
+          "jumpjump.mp3",
+          "try.mp3"
+        ],
+        "click": [
+          "jumpjump.mp3",
+          "try.mp3"
+        ]
+      }
+    },
+    "box": {
+      "story": "",
+      "visual": {},
+      "audio": {}
+    }
+  }
+}
