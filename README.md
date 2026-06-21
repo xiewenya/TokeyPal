@@ -2,11 +2,7 @@
   <img src="docs/logo.png" width="120" alt="TokeyPal logo">
 </p>
 
-<h1 align="center">🦖 TokeyPal</h1>
-
-<p align="center">
-  <a href="https://tokeypal.com"><strong>tokeypal.com</strong></a>
-</p>
+<h1 align="center">🦖 TokeyPal — <a href="https://tokeypal.com">tokeypal.com</a></h1>
 
 > ✨ Your tokens hatch today's creature story. ✨
 
