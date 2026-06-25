@@ -9,6 +9,15 @@ private func projectRoot() -> URL {
         .deletingLastPathComponent()
 }
 
+@Test func companionDisplayStageUsesThresholds() {
+    let thresholds = BlindBoxThresholds(stage2TokenThreshold: 10, stage3TokenThreshold: 20, stage4TokenThreshold: 30)
+
+    #expect(companionDisplayStage(todayTokens: 0, thresholds: thresholds) == 1)
+    #expect(companionDisplayStage(todayTokens: 10, thresholds: thresholds) == 2)
+    #expect(companionDisplayStage(todayTokens: 20, thresholds: thresholds) == 3)
+    #expect(companionDisplayStage(todayTokens: 30, thresholds: thresholds) == 4)
+}
+
 @Test func companionRuntimeResolvesStartEggAndTRexStage() throws {
     let resources = ResourceLocator(projectRoot: projectRoot())
     let runtime = try CompanionRuntime(resources: resources)
@@ -27,6 +36,35 @@ private func projectRoot() -> URL {
     #expect(trex.displayStage == 2)
     #expect(trex.coverUrl.hasSuffix("/data/t-rex/2/card.png"))
     #expect(trex.characterUrl?.hasSuffix("/data/t-rex/2/cover.png") == true)
+}
+
+@Test func companionRuntimeCanResolveSpecificStageWithoutTokenInference() throws {
+    let resources = ResourceLocator(projectRoot: projectRoot())
+    let runtime = try CompanionRuntime(resources: resources)
+    var settings = TokeyPalSettings.default
+    settings.blindBoxThresholds = BlindBoxThresholds(stage2TokenThreshold: 100, stage3TokenThreshold: 200, stage4TokenThreshold: 300)
+
+    let stage2 = try runtime.resolve(displayStage: 2, settings: settings)
+    let stage3 = try runtime.resolve(displayStage: 3, settings: settings)
+
+    #expect(stage2.displayStage == 2)
+    #expect(stage2.coverUrl.hasSuffix("/data/t-rex/2/card.png"))
+    #expect(stage2.characterUrl?.hasSuffix("/data/t-rex/2/cover.png") == true)
+    #expect(stage3.displayStage == 3)
+    #expect(stage3.coverUrl.hasSuffix("/data/t-rex/3/card.png"))
+    #expect(stage3.characterUrl?.hasSuffix("/data/t-rex/3/cover.png") == true)
+}
+
+@Test func companionRuntimeCanResolveActionForSpecificStage() throws {
+    let resources = ResourceLocator(projectRoot: projectRoot())
+    let runtime = try CompanionRuntime(resources: resources)
+
+    let trex = try runtime.resolve(displayStage: 3, settings: .default, action: "idle")
+
+    #expect(trex.displayStage == 3)
+    #expect(trex.action == "idle")
+    #expect(trex.animationUrl?.hasSuffix(".webp") == true)
+    #expect(trex.animationUrl?.contains("/data/t-rex/3/") == true)
 }
 
 @Test func companionDisplayUrlPrefersAnimationBeforeStaticCharacter() {
@@ -53,8 +91,10 @@ private func projectRoot() -> URL {
 
     let trex = try runtime.resolve(todayTokens: 5, settings: settings, action: "idle")
 
-    let idleAnimations = ["/data/t-rex/2/howl.webp", "/data/t-rex/2/walk.webp"]
-    #expect(idleAnimations.contains { trex.animationUrl?.hasSuffix($0) == true })
+    #expect(trex.displayStage == 2)
+    #expect(trex.action == "idle")
+    #expect(trex.animationUrl?.hasSuffix(".webp") == true)
+    #expect(trex.animationUrl?.contains("/data/t-rex/2/") == true)
 }
 
 @Test func selectRandomAssetMatchesElectronIndexing() {

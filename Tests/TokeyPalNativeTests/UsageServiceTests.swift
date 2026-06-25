@@ -165,6 +165,29 @@ import Testing
     #expect(stats.dataStatus == "no_sources")
 }
 
+@Test func usageServiceKeepsExistingCacheWhenFreshLoadOnlyReturnsErrors() throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let cacheURL = directory.appendingPathComponent("usage-cache.json")
+    let store = UsageCacheStore(cacheURL: cacheURL)
+    let cachedResponse = #"{"daily":[{"date":"2026-06-18","totalTokens":42}]}"#.data(using: .utf8)!
+    try store.write([
+        LoadedUsageResponse(appId: "claude", label: "Claude Code", responseData: cachedResponse)
+    ], updatedAt: "2026-06-18T00:00:00Z")
+    let before = try Data(contentsOf: cacheURL)
+
+    let service = UsageService(
+        runner: CcusageRunner(executableURL: directory.appendingPathComponent("missing-ccusage")),
+        cacheStore: store
+    )
+
+    _ = try service.currentStats(settings: .default)
+
+    #expect(try Data(contentsOf: cacheURL) == before)
+    #expect(try store.read().first?.responseData == cachedResponse)
+}
+
 @Test func usageServiceCachedStatsAvoidsRerunningCcusage() throws {
     let directory = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString, isDirectory: true)

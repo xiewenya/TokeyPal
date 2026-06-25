@@ -30,8 +30,16 @@ public final class CompanionRuntime {
     }
 
     public func resolve(todayTokens: Int, settings: TokeyPalSettings, action requestedAction: String? = nil) throws -> CompanionState {
+        try resolve(
+            displayStage: displayStage(todayTokens: todayTokens, thresholds: settings.blindBoxThresholds),
+            settings: settings,
+            action: requestedAction
+        )
+    }
+
+    public func resolve(displayStage stage: Int, settings: TokeyPalSettings, action requestedAction: String? = nil) throws -> CompanionState {
         let character = try selectedCharacter()
-        let stage = displayStage(todayTokens: todayTokens, thresholds: settings.blindBoxThresholds)
+        let stage = max(1, min(4, stage))
         let resolved = try resolveAssets(character: character, stage: stage)
         let coverFile = first(resolved.metadata.files(for: "cover"))
         let characterFile = first(resolved.metadata.files(for: "character")) ?? coverFile
@@ -327,6 +335,10 @@ enum CompanionRuntimeError: Error, Equatable {
     case missingStartType(String)
     case missingStage(String, Int)
     case missingVisualAsset(String, Int)
+}
+
+public func companionDisplayStage(todayTokens: Int, thresholds: BlindBoxThresholds) -> Int {
+    displayStage(todayTokens: todayTokens, thresholds: thresholds)
 }
 
 private func displayStage(todayTokens: Int, thresholds: BlindBoxThresholds) -> Int {

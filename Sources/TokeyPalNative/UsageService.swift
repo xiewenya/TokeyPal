@@ -14,7 +14,12 @@ public final class UsageService: Sendable {
         let generatedAt = ISO8601DateFormatter().string(from: Date())
         let loadedResponses = try runner?.loadUsageResponses(settings: settings) ?? []
         let responses = try cacheStore?.mergeWithCache(loadedResponses) ?? loadedResponses
-        try cacheStore?.write(responses.filter { !$0.isStale }, updatedAt: generatedAt)
+        let freshSuccessfulResponses = responses.filter {
+            !$0.isStale && $0.responseData != nil && $0.error == nil
+        }
+        if !freshSuccessfulResponses.isEmpty {
+            try cacheStore?.write(freshSuccessfulResponses, updatedAt: generatedAt)
+        }
         return try Self.buildUsageStats(
             localDate: localDate,
             generatedAt: generatedAt,

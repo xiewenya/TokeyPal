@@ -21,6 +21,24 @@ import Testing
     #expect(interaction.currentAction == nil)
 }
 
+@Test func companionInteractionCanClearCurrentActionExplicitly() {
+    var interaction = CompanionInteraction()
+
+    #expect(interaction.trigger("hover") == .playAction("hover"))
+    #expect(interaction.clearAction() == .clearAction)
+    #expect(interaction.currentAction == nil)
+    #expect(interaction.clearAction() == nil)
+}
+
+@Test func companionInteractionForceClearsAfterPriorityInterruption() {
+    var interaction = CompanionInteraction()
+
+    #expect(interaction.trigger("idle") == .playAction("idle"))
+    #expect(interaction.trigger("evolve") == .playAction("evolve"))
+    #expect(interaction.clearAction() == .clearAction)
+    #expect(interaction.currentAction == nil)
+}
+
 @Test func companionIdleDoesNotInterruptTransientActions() {
     var interaction = CompanionInteraction()
 

@@ -18,6 +18,7 @@ final class CompanionPanelController {
     private var currentSettings: TokeyPalSettings
     private var dragState: CompanionDragState?
     private var latestTodayTokens = 0
+    private var displayedStage: Int?
     private var interaction = CompanionInteraction()
     private var actionLoopObservation: NSKeyValueObservation?
     private var idleActionTimer: Timer?
@@ -26,6 +27,7 @@ final class CompanionPanelController {
     private var logicalBoundsAnchor: Bounds?
     private var pendingSizeChangeCenter: ScreenPoint?
     private var workspaceActivationObserver: Any?
+    private var workspaceSpaceObserver: Any?
     private var screenParametersObserver: Any?
     private var globalMouseMonitor: Any?
     private var localMouseMonitor: Any?
@@ -57,7 +59,6 @@ final class CompanionPanelController {
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
         panel.acceptsMouseMovedEvents = true
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.contentView = contentView
 
         contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -143,7 +144,7 @@ final class CompanionPanelController {
         if currentSettings.companion.alwaysOnTop {
             panel.orderFront(nil)
         } else {
-            panel.orderBack(nil)
+            applyDisabledOrdering()
         }
     }
 
@@ -209,7 +210,9 @@ final class CompanionPanelController {
         applyWindowLevel()
         applyWindowOrdering(previousAlwaysOnTop: previousAlwaysOnTop)
         imageView.isLocked = settings.companion.locked
-        refreshImage(todayTokens: latestTodayTokens)
+        if sizeChanged {
+            refreshImage()
+        }
         updateMousePassthrough(screenPoint: NSEvent.mouseLocation)
 
         if sizeChanged || settings.companion.bounds != visibleLogicalBounds {
@@ -290,13 +293,49 @@ final class CompanionPanelController {
     }
 
     func refreshImage() {
-        let stats = try? usageService.currentStats(settings: currentSettings)
-        refreshImage(todayTokens: stats?.totals.todayTokens ?? 0)
+        let stage = displayedStage ?? companionDisplayStage(
+            todayTokens: latestTodayTokens,
+            thresholds: currentSettings.blindBoxThresholds
+        )
+        displayedStage = stage
+        actionLoopObservation = nil
+        _ = interaction.clearAction()
+        showStaticCompanion(stage: stage, settings: currentSettings)
     }
 
     func refreshImage(todayTokens: Int) {
+        acceptUsageSnapshot(todayTokens: todayTokens, settings: currentSettings)
+    }
+
+    func acceptUsageSnapshot(stats: UsageStats, settings: TokeyPalSettings) {
+        acceptUsageSnapshot(todayTokens: stats.totals.todayTokens, settings: settings)
+    }
+
+    private func acceptUsageSnapshot(todayTokens: Int, settings: TokeyPalSettings) {
+        currentSettings = settings
         latestTodayTokens = todayTokens
-        let state = try? runtime.resolve(todayTokens: todayTokens, settings: currentSettings, action: interaction.currentAction)
+        let desiredStage = companionDisplayStage(
+            todayTokens: todayTokens,
+            thresholds: settings.blindBoxThresholds
+        )
+        switch CompanionStageCoordinator.decision(displayedStage: displayedStage, desiredStage: desiredStage) {
+        case .initialize(let stage):
+            displayedStage = stage
+            showStaticCompanion(stage: stage, settings: settings)
+        case .evolve(let toStage):
+            triggerCompanionAction("evolve", stage: toStage, confirmedStage: toStage)
+        case .downgrade(let toStage):
+            displayedStage = toStage
+            actionLoopObservation = nil
+            _ = interaction.clearAction()
+            showStaticCompanion(stage: toStage, settings: settings)
+        case .unchanged:
+            updateTokenBubblePosition()
+        }
+    }
+
+    private func showStaticCompanion(stage: Int, settings: TokeyPalSettings) {
+        let state = try? runtime.resolve(displayStage: stage, settings: settings, action: nil)
         guard let state, let url = companionDisplayUrl(from: state) else {
             return
         }
@@ -415,6 +454,9 @@ final class CompanionPanelController {
     private func applyWindowLevel() {
         panel.isFloatingPanel = currentSettings.companion.alwaysOnTop
         panel.level = currentSettings.companion.alwaysOnTop ? .floating : .normal
+        panel.collectionBehavior = currentSettings.companion.alwaysOnTop
+            ? [.canJoinAllSpaces, .fullScreenAuxiliary]
+            : []
     }
 
     private func applyWindowOrdering(previousAlwaysOnTop: Bool) {
@@ -425,7 +467,7 @@ final class CompanionPanelController {
         if currentSettings.companion.alwaysOnTop {
             panel.orderFront(nil)
         } else {
-            panel.orderBack(nil)
+            applyDisabledOrdering()
         }
     }
 
@@ -442,6 +484,15 @@ final class CompanionPanelController {
                 self?.handleWorkspaceActivation(activatedBundleIdentifier: activatedBundleIdentifier)
             }
         }
+        workspaceSpaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.handleWorkspaceSpaceChange()
+            }
+        }
     }
 
     private func handleWorkspaceActivation(activatedBundleIdentifier: String?) {
@@ -451,7 +502,32 @@ final class CompanionPanelController {
         guard activatedBundleIdentifier != Bundle.main.bundleIdentifier else {
             return
         }
-        panel.orderBack(nil)
+        applyDisabledOrdering()
+    }
+
+    private func handleWorkspaceSpaceChange() {
+        guard !currentSettings.companion.alwaysOnTop else {
+            return
+        }
+        applyDisabledOrdering()
+    }
+
+    private func applyDisabledOrdering() {
+        if isPanelOnFullScreenSpace() {
+            panel.orderOut(nil)
+        } else {
+            panel.orderBack(nil)
+        }
+    }
+
+    private func isPanelOnFullScreenSpace() -> Bool {
+        guard let screen = panel.screen else {
+            return false
+        }
+        let frame = screen.frame
+        let visibleFrame = screen.visibleFrame
+        return abs(frame.width - visibleFrame.width) < 1
+            && abs(frame.height - visibleFrame.height) < 1
     }
 
     private func startScreenChangeMonitoring() {
@@ -556,27 +632,44 @@ final class CompanionPanelController {
         }
     }
 
-    private func triggerCompanionAction(_ action: String) {
+    @discardableResult
+    private func triggerCompanionAction(_ action: String, stage requestedStage: Int? = nil, confirmedStage: Int? = nil) -> Bool {
         guard interaction.trigger(action) != nil else {
-            return
+            return false
         }
         actionLoopObservation = nil
-        let state = try? runtime.resolve(todayTokens: latestTodayTokens, settings: currentSettings, action: interaction.currentAction)
-        guard let state, let url = companionDisplayUrl(from: state) else {
-            return
+        let stage = requestedStage ?? displayedStage ?? companionDisplayStage(
+            todayTokens: latestTodayTokens,
+            thresholds: currentSettings.blindBoxThresholds
+        )
+        let state = try? runtime.resolve(displayStage: stage, settings: currentSettings, action: action)
+        guard let state, state.action == action, let url = companionDisplayUrl(from: state) else {
+            _ = interaction.clearAction()
+            return false
         }
         imageView.sd_setImage(with: url) { [weak self] image, _, _, _ in
             Task { @MainActor in
                 guard let self else {
                     return
                 }
+                guard let image else {
+                    if self.interaction.currentAction == action {
+                        self.actionLoopObservation = nil
+                        _ = self.interaction.clearAction()
+                    }
+                    return
+                }
                 self.resizeForLoadedImage(image)
                 guard self.interaction.currentAction == action else {
                     return
                 }
+                if let confirmedStage {
+                    self.displayedStage = confirmedStage
+                }
                 self.observeActionLoop(for: action)
             }
         }
+        return true
     }
 
     private func observeActionLoop(for action: String) {
@@ -589,7 +682,11 @@ final class CompanionPanelController {
                     return
                 }
                 self.actionLoopObservation = nil
-                self.refreshImage(todayTokens: self.latestTodayTokens)
+                let stage = self.displayedStage ?? companionDisplayStage(
+                    todayTokens: self.latestTodayTokens,
+                    thresholds: self.currentSettings.blindBoxThresholds
+                )
+                self.showStaticCompanion(stage: stage, settings: self.currentSettings)
             }
         }
     }

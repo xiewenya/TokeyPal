@@ -59,3 +59,29 @@ import Testing
         )
     }
 }
+
+@Test func ccusageRunnerReadsLargeOutputWithoutBlockingProcessExit() throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let scriptURL = directory.appendingPathComponent("chatty-ccusage")
+    try Data("""
+    #!/bin/sh
+    /usr/bin/perl -e 'print "x" x (2 * 1024 * 1024)'
+    """.utf8).write(to: scriptURL)
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
+
+    let runner = CcusageRunner(
+        executableURL: scriptURL,
+        timeoutSeconds: 1,
+        maxOutputBytes: 3 * 1024 * 1024
+    )
+
+    let output = try runner.run(
+        app: UsageAppConfig(id: "codex", label: "codex", ccusageCommand: "codex", visibleByDefault: true),
+        customDirectories: []
+    )
+
+    #expect(output.count == 2 * 1024 * 1024)
+}

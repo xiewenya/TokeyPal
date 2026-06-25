@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsStore: SettingsStore?
     private var usageService: UsageService?
     private var usagePolling = UsagePollingController(settings: .default)
+    private var latestCompanionSettings: TokeyPalSettings?
+    private var settingsGeneration = 0
     private var pollingTimer: Timer?
     private var pollingInFlight = false
     private var companionRuntime: CompanionRuntime?
@@ -43,10 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 usageService: usageService,
                 companionRuntime: companionRuntime
             )
-            store.settingsDidChange = { [weak companionPanel] settings in
-                companionPanel?.apply(settings: settings)
-                companionPanel?.refreshImage()
+            store.settingsDidChange = { [weak self] settings in
+                self?.handleSettingsChanged(settings)
             }
+            let launchSettings = (try? settingsStore.read()) ?? .default
 
             self.resources = resources
             self.settingsStore = settingsStore
@@ -54,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.companionPanel = companionPanel
             self.appStore = store
             self.companionRuntime = companionRuntime
+            self.latestCompanionSettings = launchSettings
             companionPanel.contextMenuProvider = { [weak self] in
                 self?.buildMenu() ?? NSMenu(title: "TokeyPal")
             }
@@ -210,6 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         pollingInFlight = true
+        let requestGeneration = settingsGeneration
         DispatchQueue.global(qos: .utility).async { [weak self, settingsStore, usageService] in
             let result = Result { () throws -> (TokeyPalSettings, UsageStats) in
                 let settings = try settingsStore.read()
@@ -218,22 +222,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             DispatchQueue.main.async {
                 self?.pollingInFlight = false
-                self?.handleUsageRefresh(result)
+                self?.handleUsageRefresh(result, settingsGeneration: requestGeneration)
             }
         }
     }
 
-    private func handleUsageRefresh(_ result: Result<(TokeyPalSettings, UsageStats), Error>) {
+    private func handleUsageRefresh(_ result: Result<(TokeyPalSettings, UsageStats), Error>, settingsGeneration requestGeneration: Int) {
+        guard requestGeneration == settingsGeneration else {
+            schedulePolling(afterMs: usagePolling.nextIntervalMs)
+            return
+        }
         let intervalMs: Int
         switch result {
-        case .success(let (_, stats)):
-            let settings = (try? settingsStore?.read()) ?? .default
+        case .success(let (settings, stats)):
+            latestCompanionSettings = settings
             usagePolling.updateSettings(settings.polling)
             let snapshot = UsageService.snapshot(from: stats, previousTotalTokens: usagePolling.state.currentTokens)
             _ = usagePolling.record(snapshot: snapshot)
             statusItem?.button.map { applyTrayTitle(formatTrayUsageTitle(stats.totals.todayTokens), to: $0) }
             companionPanel?.apply(settings: settings)
-            companionPanel?.refreshImage(todayTokens: stats.totals.todayTokens)
+            companionPanel?.acceptUsageSnapshot(stats: stats, settings: settings)
             intervalMs = usagePolling.nextIntervalMs
         case .failure:
             var snapshot = UsageSnapshot(
@@ -252,6 +260,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         schedulePolling(afterMs: intervalMs)
+    }
+
+    private func handleSettingsChanged(_ settings: TokeyPalSettings) {
+        let previous = latestCompanionSettings
+        latestCompanionSettings = settings
+        settingsGeneration += 1
+        let requestGeneration = settingsGeneration
+        companionPanel?.apply(settings: settings)
+        usagePolling.updateSettings(settings.polling)
+        guard let previous else {
+            return
+        }
+        guard companionUsageAffectingSettingsChanged(from: previous, to: settings) else {
+            return
+        }
+        guard let usageService else {
+            return
+        }
+        DispatchQueue.global(qos: .utility).async { [weak self, usageService] in
+            let result = Result { try usageService.currentStats(settings: settings) }
+            DispatchQueue.main.async {
+                self?.handleSettingsUsageRefresh(result, settings: settings, settingsGeneration: requestGeneration)
+            }
+        }
+    }
+
+    private func handleSettingsUsageRefresh(_ result: Result<UsageStats, Error>, settings: TokeyPalSettings, settingsGeneration requestGeneration: Int) {
+        guard requestGeneration == settingsGeneration, case .success(let stats) = result else {
+            return
+        }
+        let snapshot = UsageService.snapshot(from: stats, previousTotalTokens: usagePolling.state.currentTokens)
+        _ = usagePolling.record(snapshot: snapshot)
+        statusItem?.button.map { applyTrayTitle(formatTrayUsageTitle(stats.totals.todayTokens), to: $0) }
+        companionPanel?.acceptUsageSnapshot(stats: stats, settings: settings)
     }
 
     private func schedulePolling(afterMs intervalMs: Int) {

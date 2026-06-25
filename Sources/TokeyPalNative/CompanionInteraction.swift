@@ -24,6 +24,11 @@ public struct CompanionInteraction: Equatable, Sendable {
     }
 
     public mutating func animationTimeout() -> CompanionInteractionEffect? {
+        clearAction()
+    }
+
+    /// Forces any current action to clear; async completions must validate the action first.
+    public mutating func clearAction() -> CompanionInteractionEffect? {
         guard currentAction != nil else {
             return nil
         }

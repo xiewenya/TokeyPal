@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 public final class CcusageRunner: Sendable {
@@ -32,29 +33,50 @@ public final class CcusageRunner: Sendable {
     }
 
     func run(app: UsageAppConfig, customDirectories: [String]) throws -> Data {
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tokeypal-ccusage-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+
+        let stdoutURL = temporaryDirectory.appendingPathComponent("stdout")
+        let stderrURL = temporaryDirectory.appendingPathComponent("stderr")
+        try Data().write(to: stdoutURL)
+        try Data().write(to: stderrURL)
+        let stdout = try FileHandle(forWritingTo: stdoutURL)
+        let stderr = try FileHandle(forWritingTo: stderrURL)
+        defer {
+            try? stdout.close()
+            try? stderr.close()
+        }
+
         let process = Process()
-        let stdout = Pipe()
-        let stderr = Pipe()
         process.executableURL = executableURL
         process.arguments = buildArgs(app: app, customDirectories: customDirectories)
         process.standardOutput = stdout
         process.standardError = stderr
 
-        try process.run()
-        let group = DispatchGroup()
-        group.enter()
+        let finished = DispatchSemaphore(value: 0)
         DispatchQueue.global(qos: .utility).async {
             process.waitUntilExit()
-            group.leave()
+            finished.signal()
         }
+        try process.run()
 
-        if group.wait(timeout: .now() + timeoutSeconds) == .timedOut {
+        if finished.wait(timeout: .now() + timeoutSeconds) == .timedOut {
             process.terminate()
-            _ = group.wait(timeout: .now() + 1)
+            if finished.wait(timeout: .now() + 1) == .timedOut {
+                kill(process.processIdentifier, SIGKILL)
+                _ = finished.wait(timeout: .now() + 1)
+            }
             throw CcusageRunnerError.timedOut(timeoutSeconds: timeoutSeconds)
         }
 
-        let output = stdout.fileHandleForReading.readDataToEndOfFile()
+        let outputSize = (try? FileManager.default.attributesOfItem(atPath: stdoutURL.path)[.size] as? NSNumber)?.intValue ?? 0
+        if outputSize > maxOutputBytes {
+            throw CcusageRunnerError.outputTooLarge(limit: maxOutputBytes)
+        }
+
+        let output = try Data(contentsOf: stdoutURL)
         if output.count > maxOutputBytes {
             throw CcusageRunnerError.outputTooLarge(limit: maxOutputBytes)
         }
@@ -63,7 +85,7 @@ public final class CcusageRunner: Sendable {
             return output
         }
 
-        let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
+        let errorData = try Data(contentsOf: stderrURL)
         let message = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
         throw CcusageRunnerError.failed(status: process.terminationStatus, message: message ?? "ccusage failed")
     }
